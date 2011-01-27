@@ -1,0 +1,797 @@
+diff -ur arboretumR2/include/arboretum/stDBMTree.cc arboretumR2-silvio/include/arboretum/stDBMTree.cc
+--- arboretumR2/include/arboretum/stDBMTree.cc	2010-02-19 22:12:17.623379400 +1000
++++ arboretumR2-silvio/include/arboretum/stDBMTree.cc	2010-02-20 13:50:56.302819500 +1000
+@@ -2995,6 +2995,7 @@
+    // Initialize fields
+    Header = NULL;
+    HeaderPage = NULL;
++   this->reInsertCollection = NULL;
+ 
+    // Load header.
+    LoadHeader();
+diff -ur arboretumR2/include/arboretum/stDFTree.cc arboretumR2-silvio/include/arboretum/stDFTree.cc
+--- arboretumR2/include/arboretum/stDFTree.cc	2005-03-21 15:27:54.000000000 +1000
++++ arboretumR2-silvio/include/arboretum/stDFTree.cc	2010-02-20 13:50:56.405352000 +1000
+@@ -885,7 +885,7 @@
+    }//end if
+ 
+    // GR Part.
+-   GR = new tGR(nFocus, pThreshold, myMetricEvaluator);   
++   GR = new tGR(nFocus, pThreshold, this->myMetricEvaluator);   
+ }//end stDFTree::stDFTree
+ 
+ //------------------------------------------------------------------------------
+@@ -919,11 +919,11 @@
+ void tmpl_stDFTree::LoadHeader(){
+ 
+    if (HeaderPage != NULL){
+-      myPageManager->ReleasePage(HeaderPage);
++      this->myPageManager->ReleasePage(HeaderPage);
+    }//end if
+ 
+    // Load and set the header.
+-   HeaderPage = myPageManager->GetHeaderPage();
++   HeaderPage = this->myPageManager->GetHeaderPage();
+    if (HeaderPage->GetPageSize() < sizeof(stDFHeader)){
+       throw page_size_error("The page size is too small.");
+    }//end if
+@@ -940,7 +940,7 @@
+       if (Header != NULL){
+          WriteHeader();
+       }//end if
+-      myPageManager->ReleasePage(HeaderPage);
++      this->myPageManager->ReleasePage(HeaderPage);
+    }//end if
+ }//end stDFTree::FlushHeader
+ 
+@@ -1215,11 +1215,11 @@
+    // Update tree
+    Header->Height++;
+    SetRoot(newRoot->GetPage()->GetPageID());
+-   myPageManager->WritePage(newPage);
++   this->myPageManager->WritePage(newPage);
+ 
+    // Dispose page
+    delete newRoot;
+-   myPageManager->ReleasePage(newPage);
++   this->myPageManager->ReleasePage(newPage);
+ }//end DFTree::AddNewRoot
+ 
+ //------------------------------------------------------------------------------
+@@ -1335,10 +1335,10 @@
+                      NULL, 0, 0, 0, 0, repObj, promo1, promo2);
+ 
+                // Write nodes
+-               myPageManager->WritePage(newPage);
++               this->myPageManager->WritePage(newPage);
+                // Clean home.
+                delete newIndexNode;
+-               myPageManager->ReleasePage(newPage);
++               this->myPageManager->ReleasePage(newPage);
+                result = PROMOTION; //Report split.
+             }//end if
+             break; //end stDFTree::CHANGE_REP
+@@ -1390,10 +1390,10 @@
+                         NULL, 0, 0, 0, 0, repObj, promo1, promo2);
+ 
+                   // Write nodes
+-                  myPageManager->WritePage(newPage);
++                  this->myPageManager->WritePage(newPage);
+                   // Clean home.
+                   delete newIndexNode;
+-                  myPageManager->ReleasePage(newPage);
++                  this->myPageManager->ReleasePage(newPage);
+                   result = PROMOTION; //Report split.
+                }//end if
+             }else{
+@@ -1500,10 +1500,10 @@
+                            repObj, promo1, promo2);
+ 
+                      // Write nodes
+-                     myPageManager->WritePage(newPage);
++                     this->myPageManager->WritePage(newPage);
+                      // Clean home.
+                      delete newIndexNode;
+-                     myPageManager->ReleasePage(newPage);
++                     this->myPageManager->ReleasePage(newPage);
+                      result = PROMOTION; //Report split.
+                   }//end if
+                }else{
+@@ -1520,10 +1520,10 @@
+                         repObj, promo1, promo2);
+ 
+                   // Write nodes
+-                  myPageManager->WritePage(newPage);
++                  this->myPageManager->WritePage(newPage);
+                   // Clean home.
+                   delete newIndexNode;
+-                  myPageManager->ReleasePage(newPage);
++                  this->myPageManager->ReleasePage(newPage);
+                   result = PROMOTION; //Report split.
+                }//end if
+             }//end if
+@@ -1545,7 +1545,7 @@
+          if (repObj == NULL){
+             dist = 0;
+          }else{
+-            dist = myMetricEvaluator->GetDistance(newObj, repObj);
++            dist = this->myMetricEvaluator->GetDistance(newObj, repObj);
+          }//end if
+ 
+          // Fill entry's fields
+@@ -1555,12 +1555,12 @@
+          // if update the GR is needed
+          if (!GR->FirstSplit()){
+             GR->SetFieldDistance(leafNode, insertIdx, newObj);
+-            GR->CheckUpdate(myPageManager, this->GetRoot(),
++            GR->CheckUpdate(this->myPageManager, this->GetRoot(),
+                             leafNode->GetLeafEntry(insertIdx).FieldDistance);
+          }//end if
+ 
+          // Write node.
+-         myPageManager->WritePage(currPage);
++         this->myPageManager->WritePage(currPage);
+ 
+          // Returning values
+          promo1.Rep = NULL;
+@@ -1586,19 +1586,19 @@
+                repObj, promo1, promo2);
+ 
+          // Write node.
+-         myPageManager->WritePage(newPage);
++         this->myPageManager->WritePage(newPage);
+          // Clean home.
+          delete newLeafNode;
+-         myPageManager->ReleasePage(newPage);
++         this->myPageManager->ReleasePage(newPage);
+          result = PROMOTION; //Report split.
+       }//end if
+    }//end if
+ 
+    // Write node.
+-   myPageManager->WritePage(currPage);
++   this->myPageManager->WritePage(currPage);
+    // Clean home
+    delete currNode;
+-   myPageManager->ReleasePage(currPage);
++   this->myPageManager->ReleasePage(currPage);
+    return result;
+ }//end stDFTree<ObjectType, EvaluatorType>::InsertRecursive
+ 
+@@ -1623,8 +1623,8 @@
+ 
+    stDistance iRadius, jRadius, min;
+    stCount numberOfEntries, idx1, idx2;
+-   stPage * newPage1 = new stPage(myPageManager->GetMinimumPageSize());
+-   stPage * newPage2 = new stPage(myPageManager->GetMinimumPageSize());
++   stPage * newPage1 = new stPage(this->myPageManager->GetMinimumPageSize());
++   stPage * newPage2 = new stPage(this->myPageManager->GetMinimumPageSize());
+ 
+    numberOfEntries = node->GetNumberOfEntries();
+    min = MAXDOUBLE;   // Largest magnitude double value
+@@ -1639,7 +1639,7 @@
+             node->SetRepresentative(i, j);
+             indexNode1->RemoveAll();
+             indexNode2->RemoveAll();
+-            node->TestDistribution(indexNode1, indexNode2, myMetricEvaluator);
++            node->TestDistribution(indexNode1, indexNode2, this->myMetricEvaluator);
+             iRadius = indexNode1->GetMinimumRadius();
+             jRadius = indexNode2->GetMinimumRadius();
+             if (iRadius < jRadius)
+@@ -1662,7 +1662,7 @@
+             node->SetRepresentative(i, j);
+             leafNode1->RemoveAll();
+             leafNode2->RemoveAll();
+-            node->TestDistribution(leafNode1, leafNode2, myMetricEvaluator);
++            node->TestDistribution(leafNode1, leafNode2, this->myMetricEvaluator);
+             iRadius = leafNode1->GetMinimumRadius();
+             jRadius = leafNode2->GetMinimumRadius();
+             if (iRadius < jRadius){
+@@ -1724,7 +1724,7 @@
+ 
+          // Redistribute
+          oldNode->RemoveAll();
+-         logicNode->Distribute(oldNode, lRep, newNode, rRep, myMetricEvaluator, GR);
++         logicNode->Distribute(oldNode, lRep, newNode, rRep, this->myMetricEvaluator, GR);
+          delete logicNode;
+          break; //end stDFTree::smRANDOM
+       case stDFTree::smMINMAX:
+@@ -1732,7 +1732,7 @@
+ 
+          // Redistribute
+          oldNode->RemoveAll();
+-         logicNode->Distribute(oldNode, lRep, newNode, rRep, myMetricEvaluator, GR);
++         logicNode->Distribute(oldNode, lRep, newNode, rRep, this->myMetricEvaluator, GR);
+          delete logicNode;
+          break;  //end stDFTree::smMINMAX
+       case stDFTree::smSPANNINGTREE:
+@@ -1741,7 +1741,7 @@
+ 
+          // Perform MST
+          oldNode->RemoveAll();
+-         mstSplitter->Distribute(oldNode, lRep, newNode, rRep, myMetricEvaluator, GR);
++         mstSplitter->Distribute(oldNode, lRep, newNode, rRep, this->myMetricEvaluator, GR);
+          // Clean home
+          delete mstSplitter;
+ 
+@@ -1856,7 +1856,7 @@
+ 
+          // Redistribute
+          oldNode->RemoveAll();
+-         logicNode->Distribute(oldNode, lRep, newNode, rRep, myMetricEvaluator, GR);
++         logicNode->Distribute(oldNode, lRep, newNode, rRep, this->myMetricEvaluator, GR);
+          delete logicNode;
+          break; //end stDFTree::smRANDOM
+       case stDFTree::smMINMAX:
+@@ -1864,7 +1864,7 @@
+ 
+          // Redistribute
+          oldNode->RemoveAll();
+-         logicNode->Distribute(oldNode, lRep, newNode, rRep, myMetricEvaluator, GR);
++         logicNode->Distribute(oldNode, lRep, newNode, rRep, this->myMetricEvaluator, GR);
+          delete logicNode;
+          break;  //end stDFTree::smMINMAX
+       case stDFTree::smSPANNINGTREE:
+@@ -1873,7 +1873,7 @@
+ 
+          // Perform MST
+          oldNode->RemoveAll();
+-         mstSplitter->Distribute(oldNode, lRep, newNode, rRep, myMetricEvaluator, GR);
++         mstSplitter->Distribute(oldNode, lRep, newNode, rRep, this->myMetricEvaluator, GR);
+          // Clean home
+          delete mstSplitter;
+ 
+@@ -1954,7 +1954,7 @@
+       if (i != repObjIdx){
+          tempObj->Unserialize(node->GetObject(i), node->GetObjectSize(i));
+          node->GetIndexEntry(i).Distance =
+-            myMetricEvaluator->GetDistance(repObj, tempObj);
++            this->myMetricEvaluator->GetDistance(repObj, tempObj);
+       }else{
+          //it's the representative object
+          node->GetIndexEntry(i).Distance = 0.0;
+@@ -2005,7 +2005,7 @@
+                                indexNode->GetObjectSize(idx));
+ 
+             // Evaluate distance
+-            distance = myMetricEvaluator->GetDistance(&tmpObj, sample);
++            distance = this->myMetricEvaluator->GetDistance(&tmpObj, sample);
+ 
+             // test if this subtree qualifies.
+             if (distance <= range + indexNode->GetIndexEntry(idx).Radius){
+@@ -2032,7 +2032,7 @@
+                tmpObj.Unserialize(leafNode->GetObject(idx),
+                                   leafNode->GetObjectSize(idx));
+                // Evaluate distance
+-               distance = myMetricEvaluator->GetDistance(&tmpObj, sample);
++               distance = this->myMetricEvaluator->GetDistance(&tmpObj, sample);
+                // is it a object that qualified?
+                if (distance <= range){
+                   // Yes! Put it in the result set.
+@@ -2044,7 +2044,7 @@
+ 
+       // Free it all
+       delete currNode;
+-      myPageManager->ReleasePage(currPage);
++      this->myPageManager->ReleasePage(currPage);
+    }//end if
+ 
+    delete[] DistQueryFocus;
+@@ -2085,7 +2085,7 @@
+                tmpObj.Unserialize(indexNode->GetObject(idx),
+                                   indexNode->GetObjectSize(idx));
+                // Evaluate distance
+-               distance = myMetricEvaluator->GetDistance(&tmpObj, sample);
++               distance = this->myMetricEvaluator->GetDistance(&tmpObj, sample);
+                // is this a qualified subtree?
+                if (distance <= range + indexNode->GetIndexEntry(idx).Radius){
+                   // if this subtree can be pruned by Global Representatives
+@@ -2115,7 +2115,7 @@
+                    tmpObj.Unserialize(leafNode->GetObject(idx),
+                                       leafNode->GetObjectSize(idx));
+                    // No, it is not a representative. Evaluate distance
+-                   distance = myMetricEvaluator->GetDistance(&tmpObj, sample);
++                   distance = this->myMetricEvaluator->GetDistance(&tmpObj, sample);
+                    // Is this a qualified object?
+                    if (distance <= range){
+                       // Yes! Put it in the result set.
+@@ -2128,7 +2128,7 @@
+ 
+       // Free it all
+       delete currNode;
+-      myPageManager->ReleasePage(currPage);
++      this->myPageManager->ReleasePage(currPage);
+    }//end if
+ }//end stDFTree::RangeQuery
+ 
+@@ -2198,7 +2198,7 @@
+                tmpObj.Unserialize(indexNode->GetObject(idx),
+                                   indexNode->GetObjectSize(idx));
+                // Evaluate distance
+-               distance = myMetricEvaluator->GetDistance(&tmpObj, sample);
++               distance = this->myMetricEvaluator->GetDistance(&tmpObj, sample);
+ 
+                if (distance <= rangeK + indexNode->GetIndexEntry(idx).Radius){
+                   // if this subtree can be pruned by Global Representatives
+@@ -2231,7 +2231,7 @@
+                    // When this entry is a representative, it does not need to evaluate
+                    // a distance, because distanceRepres is iqual to distance.
+                    // Evaluate distance
+-                   distance = myMetricEvaluator->GetDistance(&tmpObj, sample);
++                   distance = this->myMetricEvaluator->GetDistance(&tmpObj, sample);
+                    //test if the object qualify
+                    if (distance <= rangeK){
+                       // Add the object.
+@@ -2251,7 +2251,7 @@
+ 
+       // Free it all
+       delete currNode;
+-      myPageManager->ReleasePage(currPage);
++      this->myPageManager->ReleasePage(currPage);
+ 
+       // Go to next node
+       stop = false;
+@@ -2347,7 +2347,7 @@
+                   tmpObj.Unserialize(indexNode->GetObject(idx),
+                                      indexNode->GetObjectSize(idx));
+                   // Evaluate distance
+-                  distance = myMetricEvaluator->GetDistance(&tmpObj, sample);
++                  distance = this->myMetricEvaluator->GetDistance(&tmpObj, sample);
+                   if (distance <= indexNode->GetIndexEntry(idx).Radius){
+                      // No! I'm qualified! Put it in the queue.
+                      pqTMPValue.PageID =  indexNode->GetIndexEntry(idx).PageID;
+@@ -2375,7 +2375,7 @@
+                   // When this entry is a representative, it does not need to evaluate
+                   // a distance, because distanceRepres is iqual to distance.
+                   // Evaluate distance.
+-                  distance = myMetricEvaluator->GetDistance(&tmpObj, sample);
++                  distance = this->myMetricEvaluator->GetDistance(&tmpObj, sample);
+                   //test if the object qualify
+                   if (distance == 0){
+                      // Add the object.
+@@ -2390,7 +2390,7 @@
+ 
+       // Free it all
+       delete currNode;
+-      myPageManager->ReleasePage(currPage);
++      this->myPageManager->ReleasePage(currPage);
+ 
+       // Go to next node.
+       if (!find){
+@@ -2438,7 +2438,7 @@
+ 
+    // Optimal tree
+    if (info->GetMeanObjectSize() != 0){
+-      info->CalculateOptimalTreeInfo(int(myPageManager->GetMinimumPageSize() /
++      info->CalculateOptimalTreeInfo(int(this->myPageManager->GetMinimumPageSize() /
+             info->GetMeanObjectSize()));
+    }//end if
+ 
+@@ -2498,7 +2498,7 @@
+ 
+       // Free it all
+       delete currNode;
+-      myPageManager->ReleasePage(currPage);
++      this->myPageManager->ReleasePage(currPage);
+    }//end if
+ }//end stDFTree::GetTreeInfoRecursive
+ 
+@@ -2526,7 +2526,7 @@
+          for (i = 0; i <  (stCount)  indexNode->GetNumberOfEntries(); i++){
+             tmp.Unserialize(indexNode->GetObject(i),
+                 indexNode->GetObjectSize(i));
+-            d = myMetricEvaluator->GetDistance(&tmp, obj);
++            d = this->myMetricEvaluator->GetDistance(&tmp, obj);
+             if (d <= indexNode->GetIndexEntry(i).Radius){
+                // Intersection !!!!
+                info->UpdateIntersections(level);
+@@ -2538,7 +2538,7 @@
+ 
+       // Free it all
+       delete currNode;
+-      myPageManager->ReleasePage(currPage);
++      this->myPageManager->ReleasePage(currPage);
+    }//end if
+ }//end stDFTree::ObjectIntersectionsRecursive
+ 
+@@ -2547,7 +2547,7 @@
+ template <class ObjectType, class EvaluatorType>
+ void tmpl_stDFTree::ForceUpdateAllFieldDistance(){
+ 
+-   GR->UpdateFieldDistance(myPageManager, this->GetRoot());
++   GR->UpdateFieldDistance(this->myPageManager, this->GetRoot());
+ 
+ }//end stDFTree::ForceUpdateAllFieldDistance
+ 
+diff -ur arboretumR2/include/arboretum/stDFTree.h arboretumR2-silvio/include/arboretum/stDFTree.h
+--- arboretumR2/include/arboretum/stDFTree.h	2005-03-21 15:06:34.000000000 +1000
++++ arboretumR2-silvio/include/arboretum/stDFTree.h	2010-02-20 13:50:56.418046500 +1000
+@@ -611,7 +611,7 @@
+ 
+    protected:
+ 
+-      friend stDFGlobalRep <ObjectType, EvaluatorType>;
++      friend class stDFGlobalRep <ObjectType, EvaluatorType>;
+ 
+       /**
+       * This type implements the GR.
+@@ -1303,7 +1303,7 @@
+       */
+       void WriteHeader(){
+          if (HeaderUpdate){
+-            myPageManager->WriteHeaderPage(HeaderPage);
++            this->myPageManager->WriteHeaderPage(HeaderPage);
+             HeaderUpdate = false;
+          }//end if
+       }//end WriteHeader
+diff -ur arboretumR2/include/arboretum/stMTree.cc arboretumR2-silvio/include/arboretum/stMTree.cc
+--- arboretumR2/include/arboretum/stMTree.cc	2005-03-19 13:04:56.000000000 +1000
++++ arboretumR2-silvio/include/arboretum/stMTree.cc	2010-02-20 13:50:56.633853000 +1000
+@@ -453,11 +453,11 @@
+ void tmpl_stMTree::LoadHeader(){
+ 
+    if (HeaderPage != NULL){
+-      myPageManager->ReleasePage(HeaderPage);
++      this->myPageManager->ReleasePage(HeaderPage);
+    }//end if
+ 
+    // Load and set the header.
+-   HeaderPage = myPageManager->GetHeaderPage();
++   HeaderPage = this->myPageManager->GetHeaderPage();
+    if (HeaderPage->GetPageSize() < sizeof(stMHeader)){
+       throw page_size_error("The page size is too small.");
+    }//end if
+@@ -474,7 +474,7 @@
+       if (this->Header != NULL){
+          WriteHeader();
+       }//end if
+-      myPageManager->ReleasePage(HeaderPage);
++      this->myPageManager->ReleasePage(HeaderPage);
+    }//end if
+ }//end stMTree::FlushHeader
+ 
+@@ -629,11 +629,11 @@
+    // Update tree
+    Header->Height++;
+    SetRoot(newRoot->GetPage()->GetPageID());
+-   myPageManager->WritePage(newPage);
++   this->myPageManager->WritePage(newPage);
+ 
+    // Dispose page
+    delete newRoot;
+-   myPageManager->ReleasePage(newPage);
++   this->myPageManager->ReleasePage(newPage);
+ }//end MTree::AddNewRoot
+ 
+ //------------------------------------------------------------------------------
+@@ -738,10 +738,10 @@
+                      NULL, 0, 0, repObj, promo1, promo2);
+ 
+                // Write nodes
+-               myPageManager->WritePage(newPage);
++               this->myPageManager->WritePage(newPage);
+                // Clean home.
+                delete newIndexNode;
+-               myPageManager->ReleasePage(newPage);
++               this->myPageManager->ReleasePage(newPage);
+                result = PROMOTION; //Report split.
+             }//end if
+             break;
+@@ -785,10 +785,10 @@
+                         NULL, 0, 0, repObj, promo1, promo2);
+ 
+                   // Write nodes
+-                  myPageManager->WritePage(newPage);
++                  this->myPageManager->WritePage(newPage);
+                   // Clean home.
+                   delete newIndexNode;
+-                  myPageManager->ReleasePage(newPage);
++                  this->myPageManager->ReleasePage(newPage);
+                   result = PROMOTION; //Report split.
+                }//end if
+             }else{
+@@ -886,10 +886,10 @@
+                            repObj, promo1, promo2);
+ 
+                      // Write nodes
+-                     myPageManager->WritePage(newPage);
++                     this->myPageManager->WritePage(newPage);
+                      // Clean home.
+                      delete newIndexNode;
+-                     myPageManager->ReleasePage(newPage);
++                     this->myPageManager->ReleasePage(newPage);
+                      result = PROMOTION; //Report split.
+                   }//end if
+                }else{
+@@ -905,10 +905,10 @@
+                         repObj, promo1, promo2);
+ 
+                   // Write nodes
+-                  myPageManager->WritePage(newPage);
++                  this->myPageManager->WritePage(newPage);
+                   // Clean home.
+                   delete newIndexNode;
+-                  myPageManager->ReleasePage(newPage);
++                  this->myPageManager->ReleasePage(newPage);
+                   result = PROMOTION; //Report split.
+                }//end if
+             }//end if
+@@ -929,14 +929,14 @@
+          if (repObj == NULL){
+             dist = 0;
+          }else{
+-            dist = myMetricEvaluator->GetDistance(newObj, repObj);
++            dist = this->myMetricEvaluator->GetDistance(newObj, repObj);
+          }//end if
+ 
+          // Fill entry's fields
+          leafNode->GetLeafEntry(insertIdx).Distance = dist;
+ 
+          // Write node.
+-         myPageManager->WritePage(currPage);
++         this->myPageManager->WritePage(currPage);
+ 
+          // Returning values
+          promo1.Rep = NULL;
+@@ -954,19 +954,19 @@
+                repObj, promo1, promo2);
+ 
+          // Write node.
+-         myPageManager->WritePage(newPage);
++         this->myPageManager->WritePage(newPage);
+          // Clean home.
+          delete newLeafNode;
+-         myPageManager->ReleasePage(newPage);
++         this->myPageManager->ReleasePage(newPage);
+          result = PROMOTION; //Report split.
+       }//end if
+    }//end if
+ 
+    // Write node.
+-   myPageManager->WritePage(currPage);
++   this->myPageManager->WritePage(currPage);
+    // Clean home
+    delete currNode;
+-   myPageManager->ReleasePage(currPage);
++   this->myPageManager->ReleasePage(currPage);
+    return result;
+ }//end stMTree<ObjectType, EvaluatorType>::InsertRecursive
+ 
+@@ -991,8 +991,8 @@
+ 
+    stDistance iRadius, jRadius, min;
+    stCount numberOfEntries, idx1, idx2;
+-   stPage * newPage1 = new stPage(myPageManager->GetMinimumPageSize());
+-   stPage * newPage2 = new stPage(myPageManager->GetMinimumPageSize());
++   stPage * newPage1 = new stPage(this->myPageManager->GetMinimumPageSize());
++   stPage * newPage2 = new stPage(this->myPageManager->GetMinimumPageSize());
+ 
+    numberOfEntries = node->GetNumberOfEntries();
+    min = MAXDOUBLE;   // Largest magnitude double value
+@@ -1007,7 +1007,7 @@
+             node->SetRepresentative(i, j);
+             indexNode1->RemoveAll();
+             indexNode2->RemoveAll();
+-            node->TestDistribution(indexNode1, indexNode2, myMetricEvaluator);
++            node->TestDistribution(indexNode1, indexNode2, this->myMetricEvaluator);
+             iRadius = indexNode1->GetMinimumRadius();
+             jRadius = indexNode2->GetMinimumRadius();
+             if (iRadius < jRadius)
+@@ -1030,7 +1030,7 @@
+             node->SetRepresentative(i, j);
+             leafNode1->RemoveAll();
+             leafNode2->RemoveAll();
+-            node->TestDistribution(leafNode1, leafNode2, myMetricEvaluator);
++            node->TestDistribution(leafNode1, leafNode2, this->myMetricEvaluator);
+             iRadius = leafNode1->GetMinimumRadius();
+             jRadius = leafNode2->GetMinimumRadius();
+             if (iRadius < jRadius)
+@@ -1092,7 +1092,7 @@
+ 
+          // Redistribute
+          oldNode->RemoveAll();
+-         logicNode->Distribute(oldNode, lRep, newNode, rRep, myMetricEvaluator);
++         logicNode->Distribute(oldNode, lRep, newNode, rRep, this->myMetricEvaluator);
+          delete logicNode;
+          break; //end stMTree::RANDOM
+       case stMTree::MIN_RAD:
+@@ -1100,7 +1100,7 @@
+ 
+          // Redistribute
+          oldNode->RemoveAll();
+-         logicNode->Distribute(oldNode, lRep, newNode, rRep, myMetricEvaluator);
++         logicNode->Distribute(oldNode, lRep, newNode, rRep, this->myMetricEvaluator);
+          delete logicNode;
+          break;  //end stMTree::MIN_RAD
+ 
+@@ -1203,7 +1203,7 @@
+ 
+          // Redistribute
+          oldNode->RemoveAll();
+-         logicNode->Distribute(oldNode, lRep, newNode, rRep, myMetricEvaluator);
++         logicNode->Distribute(oldNode, lRep, newNode, rRep, this->myMetricEvaluator);
+          delete logicNode;
+          break; //end stMTree::RANDOM
+       case stMTree::MIN_RAD:
+@@ -1211,7 +1211,7 @@
+ 
+          // Redistribute
+          oldNode->RemoveAll();
+-         logicNode->Distribute(oldNode, lRep, newNode, rRep, myMetricEvaluator);
++         logicNode->Distribute(oldNode, lRep, newNode, rRep, this->myMetricEvaluator);
+          delete logicNode;
+          break;  //end stMTree::MIN_RAD
+ 
+@@ -1273,7 +1273,7 @@
+       if (i != repObjIdx){
+          tempObj->Unserialize(node->GetObject(i), node->GetObjectSize(i));
+          node->GetIndexEntry(i).Distance =
+-            myMetricEvaluator->GetDistance(repObj, tempObj);
++            this->myMetricEvaluator->GetDistance(repObj, tempObj);
+       }else{
+          //it's the representative object
+          node->GetIndexEntry(i).Distance = 0.0;
+@@ -1315,7 +1315,7 @@
+             //get the other object
+             object2->Unserialize(indexNode->GetObject(j), indexNode->GetObjectSize(j));
+             //calculate the distance of the two objects
+-            distanceTemp = myMetricEvaluator->GetDistance(object1, object2);
++            distanceTemp = this->myMetricEvaluator->GetDistance(object1, object2);
+             //sum the distance with the distance of the two
+             distanceTemp = distanceTemp + indexNode->GetIndexEntry(i).Radius +
+                                       indexNode->GetIndexEntry(j).Radius;
+@@ -1370,7 +1370,7 @@
+             tmpObj.Unserialize(indexNode->GetObject(idx),
+                                indexNode->GetObjectSize(idx));
+             // Evaluate distance
+-            distance = myMetricEvaluator->GetDistance(&tmpObj, sample);
++            distance = this->myMetricEvaluator->GetDistance(&tmpObj, sample);
+             // test if this subtree qualifies.
+             if (distance <= range + indexNode->GetIndexEntry(idx).Radius){
+                // Yes! Analyze this subtree.
+@@ -1390,7 +1390,7 @@
+             tmpObj.Unserialize(leafNode->GetObject(idx),
+                                leafNode->GetObjectSize(idx));
+             // Evaluate distance
+-            distance = myMetricEvaluator->GetDistance(&tmpObj, sample);
++            distance = this->myMetricEvaluator->GetDistance(&tmpObj, sample);
+             // is it a object that qualified?
+             if (distance <= range){
+                // Yes! Put it in the result set.
+@@ -1401,7 +1401,7 @@
+ 
+       // Free it all
+       delete currNode;
+-      myPageManager->ReleasePage(currPage);
++      this->myPageManager->ReleasePage(currPage);
+    }//end if
+ 
+    return result;
+@@ -1438,7 +1438,7 @@
+                // Rebuild the object
+                tmpObj.Unserialize(indexNode->GetObject(idx), indexNode->GetObjectSize(idx));
+                // Evaluate distance
+-               distance = myMetricEvaluator->GetDistance(&tmpObj, sample);
++               distance = this->myMetricEvaluator->GetDistance(&tmpObj, sample);
+                // is this a qualified subtree?
+                if (distance <= range + indexNode->GetIndexEntry(idx).Radius){
+                   // Yes! Analyze it!
+@@ -1460,7 +1460,7 @@
+                // Rebuild the object
+                tmpObj.Unserialize(leafNode->GetObject(idx), leafNode->GetObjectSize(idx));
+                // No, it is not a representative. Evaluate distance
+-               distance = myMetricEvaluator->GetDistance(&tmpObj, sample);
++               distance = this->myMetricEvaluator->GetDistance(&tmpObj, sample);
+                // Is this a qualified object?
+                if (distance <= range){
+                   // Yes! Put it in the result set.
+@@ -1472,7 +1472,7 @@
+ 
+       // Free it all
+       delete currNode;
+-      myPageManager->ReleasePage(currPage);
++      this->myPageManager->ReleasePage(currPage);
+    }//end if
+ }//end stMTree::RangeQuery
+ 
+@@ -1535,7 +1535,7 @@
+                // Rebuild the object
+                tmpObj.Unserialize(indexNode->GetObject(idx), indexNode->GetObjectSize(idx));
+                // Evaluate distance
+-               distance = myMetricEvaluator->GetDistance(&tmpObj, sample);
++               distance = this->myMetricEvaluator->GetDistance(&tmpObj, sample);
+ 
+                if (distance <= rangeK + indexNode->GetIndexEntry(idx).Radius){
+                   // Yes! I'm qualified! Put it in the queue.
+@@ -1560,7 +1560,7 @@
+                // When this entry is a representative, it does not need to evaluate
+                // a distance, because distanceRepres is iqual to distance.
+                // Evaluate distance
+-               distance = myMetricEvaluator->GetDistance(&tmpObj, sample);
++               distance = this->myMetricEvaluator->GetDistance(&tmpObj, sample);
+                //test if the object qualify
+                if (distance <= rangeK){
+                   // Add the object.
+@@ -1579,7 +1579,7 @@
+ 
+       // Free it all
+       delete currNode;
+-      myPageManager->ReleasePage(currPage);
++      this->myPageManager->ReleasePage(currPage);
+ 
+       // Go to next node
+       stop = false;
+@@ -1664,7 +1664,7 @@
+                // Rebuild the object
+                tmpObj.Unserialize(indexNode->GetObject(idx), indexNode->GetObjectSize(idx));
+                // Evaluate distance
+-               distance = myMetricEvaluator->GetDistance(&tmpObj, sample);
++               distance = this->myMetricEvaluator->GetDistance(&tmpObj, sample);
+ 
+                if (distance <= indexNode->GetIndexEntry(idx).Radius){
+                   // Yes! I'm qualified! Put it in the queue.
+@@ -1687,7 +1687,7 @@
+                // When this entry is a representative, it does not need to evaluate
+                // a distance, because distanceRepres is iqual to distance.
+                // Evaluate distance.
+-               distance = myMetricEvaluator->GetDistance(&tmpObj, sample);
++               distance = this->myMetricEvaluator->GetDistance(&tmpObj, sample);
+                //test if the object qualify
+                if (distance == 0){
+                   // Add the object.
+@@ -1701,7 +1701,7 @@
+ 
+       // Free it all
+       delete currNode;
+-      myPageManager->ReleasePage(currPage);
++      this->myPageManager->ReleasePage(currPage);
+ 
+       // Go to next node.
+       if (!find){
+@@ -1748,7 +1748,7 @@
+ 
+    // Optimal tree
+    if (info->GetMeanObjectSize() != 0){
+-      info->CalculateOptimalTreeInfo(int(myPageManager->GetMinimumPageSize() /
++      info->CalculateOptimalTreeInfo(int(this->myPageManager->GetMinimumPageSize() /
+             info->GetMeanObjectSize()));
+    }//end if
+ 
+@@ -1809,7 +1809,7 @@
+ 
+       // Free it all
+       delete currNode;
+-      myPageManager->ReleasePage(currPage);
++      this->myPageManager->ReleasePage(currPage);
+    }//end if
+ }//end stMTree::GetTreeInfoRecursive
+ 
+@@ -1837,7 +1837,7 @@
+          for (i = 0; i < indexNode->GetNumberOfEntries(); i++){
+             tmp.Unserialize(indexNode->GetObject(i),
+                 indexNode->GetObjectSize(i));
+-            d = myMetricEvaluator->GetDistance(&tmp, obj);
++            d = this->myMetricEvaluator->GetDistance(&tmp, obj);
+             if (d <= indexNode->GetIndexEntry(i).Radius){
+                // Intersection !!!!
+                info->UpdateIntersections(level);
+@@ -1849,6 +1849,6 @@
+ 
+       // Free it all
+       delete currNode;
+-      myPageManager->ReleasePage(currPage);
++      this->myPageManager->ReleasePage(currPage);
+    }//end if
+ }//end stMTree::ObjectIntersectionsRecursive
+diff -ur arboretumR2/include/arboretum/stMTree.h arboretumR2-silvio/include/arboretum/stMTree.h
+--- arboretumR2/include/arboretum/stMTree.h	2005-03-19 13:03:48.000000000 +1000
++++ arboretumR2-silvio/include/arboretum/stMTree.h	2010-02-20 13:50:56.644594500 +1000
+@@ -1068,7 +1068,7 @@
+          // Test if the header was modified.
+          if (this->HeaderUpdate){
+             // Yes, write it!
+-            myPageManager->WriteHeaderPage(HeaderPage);
++            this->myPageManager->WriteHeaderPage(HeaderPage);
+             this->HeaderUpdate = false;
+          }//end if
+       }//end WriteHeader
